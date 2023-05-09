@@ -20,3 +20,9 @@ This is a simple commission calculator that takes in a CSV file of transactions 
     ```
    where `{file}` is the file name to the CSV file.
    (For example `php artisan commission:fee transaction.csv`).
+
+### How to run tests
+1. Run:
+    ```bash
+    php artisan test
+    ```
