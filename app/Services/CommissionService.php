@@ -10,11 +10,40 @@ use Illuminate\Support\Facades\Storage;
 
 class CommissionService
 {
-
-    public function __construct()
+    public function getAllOperationFromCsv($csvFile): array
     {
-    }
+        $filePath = storage_path($csvFile);
 
+        if (!file_exists($filePath)) {
+            throw new \Exception('File not found in storage folder!');
+        }
+
+        $file = fopen($filePath, 'r');
+
+        $header = [
+            'date',
+            'client_id',
+            'client_type',
+            'operation_type',
+            'amount',
+            'currency',
+            'operation_id',
+        ];
+
+        $operations = [];
+
+        $operationId = 0;
+
+        while ($row = fgetcsv($file)) {
+            $row[] = $operationId;
+            $operations[] = array_combine($header, $row);
+            $operationId++;
+        }
+
+        fclose($file);
+
+        return $operations;
+    }
 
     public function calculateCommission($operation, $operations)
     {
@@ -27,6 +56,7 @@ class CommissionService
         if ($operation['operation_type'] === OperationTypes::WITHDRAW->value) {
             $commission = $this->calculateWithdrawCommission($operation, $operations);
         }
+
         return ceil($commission * pow(10, 2)) / pow(10, 2);
 
     }
@@ -122,5 +152,4 @@ class CommissionService
 
         return $currencyRates[$currency];
     }
-
 }
