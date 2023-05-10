@@ -1,15 +1,33 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Commision;
 
 use App\Enums\ClientTypes;
 use App\Enums\OperationTypes;
+use App\Services\ExchangeRate\ExchangeRateFactory;
+use App\Services\ExchangeRate\ExchangeRateInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 class CommissionService
 {
+    protected object $exchangeRateService;
+
+    /**
+     * CommissionService constructor.
+     * @param ExchangeRateFactory $exchangeRateFactory
+     */
+    public function __construct(public ExchangeRateFactory $exchangeRateFactory)
+    {
+        $this->exchangeRateService = $exchangeRateFactory->getExchangeRateService();
+    }
+
+    /**
+     *
+     * @param $csvFile
+     * @return array
+     * @throws \Exception
+     */
     public function getAllOperationFromCsv($csvFile): array
     {
         $filePath = storage_path($csvFile);
@@ -45,7 +63,13 @@ class CommissionService
         return $operations;
     }
 
-    public function calculateCommission($operation, $operations)
+    /**
+     * calculate commission for each operation
+     * @param $operation
+     * @param $operations
+     * @return string
+     */
+    public function calculateCommission($operation, $operations): string
     {
         $commission = 0;
 
@@ -57,26 +81,32 @@ class CommissionService
             $commission = $this->calculateWithdrawCommission($operation, $operations);
         }
 
-        return ceil($commission * pow(10, 2)) / pow(10, 2);
+        return number_format(ceil($commission * 100) / 100,2);
 
     }
-
-    private function calculateDepositCommission($operation)
+    /**
+     * calculate commission for deposit operation
+     * @param $operation
+     * @return float
+     */
+    private function calculateDepositCommission($operation): float
     {
-        $commission = 0;
-
         if ($operation['client_type'] === ClientTypes::PRIVATE->value) {
-            $commission = $operation['amount'] * 0.0003;
+            return $operation['amount'] * 0.0003;
         }
 
         if ($operation['client_type'] === ClientTypes::BUSINESS->value) {
-            $commission = $operation['amount'] * 0.0003;
+            return $operation['amount'] * 0.0003;
         }
-
-        return $commission;
     }
 
-    private function calculateWithdrawCommission($operation, $operations)
+    /**
+     * calculate commission for withdraw operation
+     * @param $operation
+     * @param $operations
+     * @return float
+     */
+    private function calculateWithdrawCommission($operation, $operations): float
     {
         if ($operation['client_type'] === ClientTypes::PRIVATE->value) {
             $date = Carbon::parse($operation['date']);
@@ -88,68 +118,32 @@ class CommissionService
 
             foreach ($clientTransactions as $clientTransaction) {
                 if ($clientTransaction['operation_type'] == OperationTypes::WITHDRAW->value) {
+
                     $operationDate = Carbon::parse($clientTransaction['date']);
+
                     if ($operationDate->between($weekStart, $weekEnd)) {
                         if ($clientTransaction === $operation) {
                             break;
                         }
-                        $operationAmountPerWeek += $this->amountToEur($clientTransaction);
+                        $operationAmountPerWeek += $this->exchangeRateService->amountToEur($clientTransaction);
                         $operationCountPerWeek++;
                     }
                 }
             }
+
             if ($operationCountPerWeek > 3) {
                 return $operation['amount'] * 0.003;
             } else {
                 if ($operationAmountPerWeek >= 1000) {
                     return $operation['amount'] * 0.003;
                 } else {
-                    $amount = max($this->amountToEur($operation) + $operationAmountPerWeek - 1000, 0);
-                    return $this->amountFromEur($amount, $operation['currency']) * 0.003;
+                    $amount = max($this->exchangeRateService->amountToEur($operation) + $operationAmountPerWeek - 1000, 0);
+                    return $this->exchangeRateService->amountFromEur($amount, $operation['currency']) * 0.003;
                 }
             }
         }
         if ($operation['client_type'] === ClientTypes::BUSINESS->value) {
             return $operation['amount'] * 0.005;
         }
-    }
-
-    private function amountToEur($operation): float|int
-    {
-        $amount = $operation['amount'];
-        $currency = $operation['currency'];
-
-        if ($currency !== 'EUR') {
-            $currencyRate = $this->getCurrencyRate($currency);
-            $amount = $amount / $currencyRate;
-        } else {
-            $amount = $amount * 1;
-        }
-
-        return $amount;
-    }
-
-    private function amountFromEur($amount, $currency): float|int
-    {
-        if ($currency !== 'EUR') {
-            $currencyRate = $this->getCurrencyRate($currency);
-            $amount = $amount * $currencyRate;
-        } else {
-            $amount = $amount * 1;
-        }
-
-        return $amount;
-    }
-
-    private function getCurrencyRate(mixed $currency)
-    {
-        $currencyRates = Http::get(config('exchangeRate.providers.test.url'));
-        if ($currencyRates->failed()) {
-            abort(500, 'Failed to get currency rates');
-        }
-        $currencyRates = json_decode($currencyRates->body(), true);
-        $currencyRates = $currencyRates['rates'];
-
-        return $currencyRates[$currency];
     }
 }

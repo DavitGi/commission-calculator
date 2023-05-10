@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Services\CommissionService;
+use App\Services\Commision\CommissionService;
 use PHPUnit\Framework\TestCase;
 
 class CommissionTest extends TestCase
@@ -137,6 +137,22 @@ class CommissionTest extends TestCase
 
         foreach ($operations as $operation) {
             $this->assertEquals(7.5, $service->calculateCommission($operation, $operations));
+        }
+    }
+
+    public function test_exchange_rate(): void
+    {
+        $operations = [
+            [
+                'amount' => '1500.00',
+                'currency' => 'JPY'
+            ]
+        ];
+
+        $service = new CommissionService();
+
+        foreach ($operations as $operation) {
+            $this->assertEquals(6.00, $service->calculateCommission($operation, $operations));
         }
     }
 }
