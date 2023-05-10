@@ -1,13 +1,11 @@
 <?php
 
-namespace App\Services\Commision;
+namespace App\Services\Commission;
 
 use App\Enums\ClientTypes;
 use App\Enums\OperationTypes;
 use App\Services\ExchangeRate\ExchangeRateFactory;
-use App\Services\ExchangeRate\ExchangeRateInterface;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
 
 class CommissionService
 {
@@ -17,7 +15,7 @@ class CommissionService
      * CommissionService constructor.
      * @param ExchangeRateFactory $exchangeRateFactory
      */
-    public function __construct(public ExchangeRateFactory $exchangeRateFactory)
+    public function __construct(ExchangeRateFactory $exchangeRateFactory)
     {
         $this->exchangeRateService = $exchangeRateFactory->getExchangeRateService();
     }
@@ -69,7 +67,7 @@ class CommissionService
      * @param $operations
      * @return string
      */
-    public function calculateCommission($operation, $operations): string
+    public function calculateCommission($operation, $operations)
     {
         $commission = 0;
 

@@ -2,8 +2,6 @@
 
 namespace App\Services\ExchangeRate;
 
-use App\Enums\ExchangeRateProviders;
-
 class ExchangeRateFactory
 {
     /**

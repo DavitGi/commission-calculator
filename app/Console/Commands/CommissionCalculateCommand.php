@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Commision\CommissionService;
+use App\Services\Commission\CommissionService;
 use Illuminate\Console\Command;
 
 class CommissionCalculateCommand extends Command

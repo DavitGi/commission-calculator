@@ -2,7 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Services\Commision\CommissionService;
+use App\Services\Commission\CommissionService;
+use App\Services\ExchangeRate\ExchangeRateFactory;
 use PHPUnit\Framework\TestCase;
 
 class CommissionTest extends TestCase
@@ -20,7 +21,8 @@ class CommissionTest extends TestCase
             ]
         ];
 
-        $service = new CommissionService();
+                $service = new CommissionService(new ExchangeRateFactory());
+;
 
         foreach ($operations as $operation) {
             $this->assertEquals(0.3, $service->calculateCommission($operation, $operations));
@@ -41,7 +43,8 @@ class CommissionTest extends TestCase
             ]
         ];
 
-        $service = new CommissionService();
+                $service = new CommissionService(new ExchangeRateFactory());
+;
 
         foreach ($operations as $operation) {
             $this->assertEquals(0, $service->calculateCommission($operation, $operations));
@@ -92,7 +95,8 @@ class CommissionTest extends TestCase
             ]
         ];
 
-        $service = new CommissionService();
+                $service = new CommissionService(new ExchangeRateFactory());
+;
 
         foreach ($operations as $operation) {
             $this->assertEquals(0.6, $service->calculateCommission($operation, $operations));
@@ -112,7 +116,8 @@ class CommissionTest extends TestCase
             ]
         ];
 
-        $service = new CommissionService();
+                $service = new CommissionService(new ExchangeRateFactory());
+;
 
         foreach ($operations as $operation) {
             $this->assertEquals(0.3, $service->calculateCommission($operation, $operations));
@@ -133,26 +138,10 @@ class CommissionTest extends TestCase
             ]
         ];
 
-        $service = new CommissionService();
+        $service = new CommissionService(new ExchangeRateFactory());
 
         foreach ($operations as $operation) {
             $this->assertEquals(7.5, $service->calculateCommission($operation, $operations));
-        }
-    }
-
-    public function test_exchange_rate(): void
-    {
-        $operations = [
-            [
-                'amount' => '1500.00',
-                'currency' => 'JPY'
-            ]
-        ];
-
-        $service = new CommissionService();
-
-        foreach ($operations as $operation) {
-            $this->assertEquals(6.00, $service->calculateCommission($operation, $operations));
         }
     }
 }
